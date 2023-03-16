@@ -7,3 +7,12 @@ install: requirements.txt
 	pip3 install -r requirements.txt 
 
 
+create:
+ifdef n
+	python manage.py create --n=$(n)
+else
+	python manage.py create
+endif
+
+signup:
+	python manage.py views 
