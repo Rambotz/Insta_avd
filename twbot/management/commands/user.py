@@ -20,7 +20,7 @@ class Command(BaseCommand):
         
         for user in all_User:
             aa = User_details.objects.create(
-                avdsname = user.avdsname,
+                avdsname = 'new_'+str(user.avdsname),
                 username = user.username,
                 number = user.number,
                 password = user.password,
