@@ -6,6 +6,14 @@ env:
 install: requirements.txt 
 	pip3 install -r requirements.txt 
 
+migrate:
+	python manage.py makemigrations
+	python manage.py migrate
+	python manage.py makemigrations core
+	python manage.py migrate core
+	python manage.py makemigrations twbot
+	python manage.py migrate twbot
+
 
 create:
 ifdef n
@@ -16,7 +24,7 @@ endif
 
 signup:
 	python manage.py views 
-	
+
 git:
 	git stash
 	git pull
