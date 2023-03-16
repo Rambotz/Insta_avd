@@ -16,3 +16,7 @@ endif
 
 signup:
 	python manage.py views 
+	
+git:
+	git stash
+	git pull
