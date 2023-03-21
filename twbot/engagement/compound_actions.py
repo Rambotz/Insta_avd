@@ -131,13 +131,7 @@ class FollowLikeComment():
                     follow_bot = DirectFollow(driver, self.target_name)
                     follow_resp = follow_bot.follow_user()
                     if follow_resp:
-                        TwitterActionLog.objects.create(
-                            avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                            action_type='FOLLOW',
-                            action=follow_resp,
-                            status='SUCCESS',
-                            error={'msg': ''}
-                        )
+                        
                         self.follow_completed = True
 
             # Open latest post on target account
@@ -161,13 +155,7 @@ class FollowLikeComment():
                     print(like_resp)
                     if like_resp:
                         self.like_completed = True
-                        TwitterActionLog.objects.create(
-                            avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                            action_type='LIKE',
-                            action=like_resp,
-                            status='SUCCESS',
-                            error={'msg': ''}
-                        )
+                        
                     if not like_resp:
                         self.like_completed = False
 
@@ -194,23 +182,11 @@ class FollowLikeComment():
                                     time.sleep(2)
                                     self.retweet_completed = True
                                     print("Successfully retweeted post.")
-                                    TwitterActionLog.objects.create(
-                                        avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                        action_type='RETWEET_ACTION',
-                                        action='Successfully retweeted post.',
-                                        status='SUCCESS',
-                                        error={'msg': ''}
-                                    )
+                                    
                             else:
                                 self.retweet_completed = False
                                 print("Post is already retweeted.")
-                                TwitterActionLog.objects.create(
-                                    avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                    action_type='RETWEET_ACTION',
-                                    action='Post is already retweeted.',
-                                    status='SUCCESS',
-                                    error={'msg': ''}
-                                )
+                                
                     except:
                         tb = traceback.format_exc()
                         print("There was an error, while retweeting the post.")
@@ -224,26 +200,13 @@ class FollowLikeComment():
                     comment_resp = comment_bot.comment_on_openend_post()
                     if comment_resp:
                         self.comment_completed = True
-                        TwitterActionLog.objects.create(
-                            avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                            action_type='COMMENT',
-                            action=comment_resp,
-                            status='SUCCESS',
-                            error={'msg': ''}
-                        )
+                        
 
         except Exception as e:
             tb = traceback.format_exc()
             print(f"Something went wrong while performing action on bot {self.bot.emulator_name}")
             print("Error in Action ===============\n", tb)
-            TwitterActionLog.objects.create(
-                avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                action_type='ENGAGEMENT',
-                action=comment_resp,
-                status='FAIL',
-                error={'msg': str(tb)}
-            )
-
+            
 
 class FollowLikeCommentWithLink:
     def __init__(self, bot_instance, post_url, comment=None, do_follow=True,
@@ -372,13 +335,7 @@ class FollowLikeCommentWithLink:
                         follow_resp = follow_bot.follow_user()
                         LOGGER.debug(f'follow_resp: {follow_resp}')
                         if follow_resp:
-                            TwitterActionLog.objects.create(
-                                avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                action_type='FOLLOW',
-                                action=follow_resp,
-                                status='SUCCESS',
-                                error={'msg': ''}
-                            )
+                            
                             self.follow_completed = True
                             # record action info
                             self.recorder.record_action(
@@ -404,13 +361,7 @@ class FollowLikeCommentWithLink:
                         print(like_resp)
                         if like_resp:
                             self.like_completed = True
-                            TwitterActionLog.objects.create(
-                                avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                action_type='LIKE',
-                                action=like_resp,
-                                status='SUCCESS',
-                                error={'msg': ''}
-                            )
+                            
                             # record action info
                             self.recorder.record_action(
                                 self.owner,
@@ -448,13 +399,7 @@ class FollowLikeCommentWithLink:
                                     time.sleep(2)
                                     self.retweet_completed = True
                                     print("Successfully retweeted post.")
-                                    TwitterActionLog.objects.create(
-                                        avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                        action_type='RETWEET_ACTION',
-                                        action='Successfully retweeted post.',
-                                        status='SUCCESS',
-                                        error={'msg': ''}
-                                    )
+                                    
                                     # record action info
                                     self.recorder.record_action(
                                         self.owner,
@@ -464,13 +409,7 @@ class FollowLikeCommentWithLink:
                             else:
                                 self.retweet_completed = False
                                 print("Post is already retweeted.")
-                                TwitterActionLog.objects.create(
-                                    avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                    action_type='RETWEET_ACTION',
-                                    action='Post is already retweeted.',
-                                    status='SUCCESS',
-                                    error={'msg': ''}
-                                )
+                                
                     except:
                         tb = traceback.format_exc()
                         print("There was an error, while retweeting the post.")
@@ -488,13 +427,7 @@ class FollowLikeCommentWithLink:
                         comment_resp = comment_bot.comment_on_openend_post()
                         if comment_resp:
                             self.comment_completed = True
-                            TwitterActionLog.objects.create(
-                                avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                action_type='COMMENT',
-                                action=comment_resp,
-                                status='SUCCESS',
-                                error={'msg': ''}
-                            )
+                            
                             # record action info
                             self.recorder.record_action(
                                 self.owner,
@@ -515,14 +448,7 @@ class FollowLikeCommentWithLink:
             tb = traceback.format_exc()
             print(f"Something went wrong while performing action on bot {self.bot.emulator_name}")
             print("Error in Action ===============\n", tb)
-            TwitterActionLog.objects.create(
-                avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                action_type='ENGAGEMENT',
-                action=comment_resp,
-                status='FAIL',
-                error={'msg': str(tb)}
-            )
-
+            
         return True
 
     def perform_action(self):
@@ -601,13 +527,7 @@ class FollowLikeCommentByUserName:
                                     self.user_name,
                                     ActionResult.SUCCESSFUL)
 
-                                TwitterActionLog.objects.create(
-                                    avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                    action_type='FOLLOW',
-                                    action=follow_resp,
-                                    status='SUCCESS',
-                                    error={'msg': ''}
-                                )
+                                
                                 self.follow_completed = True
                             else:
                                 # record action info
@@ -726,13 +646,7 @@ class FollowLikeCommentByUserName:
                                 time.sleep(5)
                                 if comment_resp:
                                     self.comment_completed = True
-                                    TwitterActionLog.objects.create(
-                                        avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                        action_type='COMMENT',
-                                        action=comment_resp,
-                                        status='SUCCESS',
-                                        error={'msg': ''}
-                                    )
+                                    
                                     # record action info
                                     self.recorder.record_action(
                                             self.owner,
@@ -789,13 +703,7 @@ class FollowLikeCommentByUserName:
                                     tweet=tweet_record)
 
                                 self.like_completed = True
-                                TwitterActionLog.objects.create(
-                                    avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                    action_type='LIKE',
-                                    action=like_resp,
-                                    status='SUCCESS',
-                                    error={'msg': ''}
-                                )
+                                
                             else:
                                 # record action info
                                 self.recorder.record_action(
@@ -851,13 +759,7 @@ class FollowLikeCommentByUserName:
                                         time.sleep(2)
                                         self.retweet_completed = True
                                         print("Successfully retweeted post.")
-                                        TwitterActionLog.objects.create(
-                                            avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                            action_type='RETWEET_ACTION',
-                                            action='Successfully retweeted post.',
-                                            status='SUCCESS',
-                                            error={'msg': ''}
-                                        )
+                                        
                                         # record action info
                                         self.recorder.record_action(
                                             self.owner,
@@ -876,13 +778,7 @@ class FollowLikeCommentByUserName:
                                 else:
                                     self.retweet_completed = False
                                     print("Post is already retweeted.")
-                                    TwitterActionLog.objects.create(
-                                        avd=UserAvd.objects.get(name=self.bot.emulator_name),
-                                        action_type='RETWEET_ACTION',
-                                        action='Post is already retweeted.',
-                                        status='SUCCESS',
-                                        error={'msg': ''}
-                                    )
+                                    
                         except Exception as e:
                             LOGGER.exception(e)
                             tb = traceback.format_exc()

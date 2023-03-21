@@ -24,7 +24,7 @@ from constants import XANALIA_TAGS
 from exceptions import GetSmsCodeNotEnoughBalance
 from main import LOGGER
 from surviral_avd.settings import BASE_DIR
-from twbot.models import TwitterActionLog, UserAvd, TwitterAccount
+from twbot.models import UserAvd, TwitterAccount
 from utils import get_comment
 
 
@@ -1004,7 +1004,6 @@ def log_activity(avd_id, action_type, msg, error):
             "error": error,
         }
         LOGGER.debug(f'Log Activity: {details}')
-        TwitterActionLog.objects.create(**details)
     except Exception as e:
         print(e)
 
@@ -1246,25 +1245,12 @@ def perform_random_action(driver, bot_name):
         #         followed_accounts_str += ", " + x
         # write_output([UserAvd.objects.get(name=bot_name).twitter_account.screen_name, followed_accounts[1:], search_tag, len(followed_accounts[1:]), len(followed_accounts[1:])], f"random_action_{str(datetime.date.today())}")
 
-        TwitterActionLog.objects.create(
-            avd=UserAvd.objects.get(name=bot_name),
-            action_type='RANDOM_ACTION',
-            action="",
-            msg={search_tag: followed_accounts},
-            status='SUCCESS',
-            error={'msg': ''}
-        )
+        
         return True
 
     except Exception as e:
         tb = traceback.format_exc()
-        TwitterActionLog.objects.create(
-            avd=UserAvd.objects.get(name=bot_name),
-            action_type='RANDOM_ACTION',
-            action='',
-            status='FAIL',
-            error={'msg': str(tb)}
-        )
+        
         LOGGER.exception(e)
         return False
 

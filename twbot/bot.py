@@ -35,6 +35,7 @@ def random_sleep(min_sleep_time=1, max_sleep_time=5,reason=''):
 class InstaBot:
     def __init__(self, emulator_name, start_appium=True, start_adb=True,
                  appium_server_port=APPIUM_SERVER_PORT, adb_console_port=None):
+        self.user = ''
         self.emulator_name = emulator_name
         self.user_avd = UserAvd.objects.get(name=emulator_name)
         self.logger = LOGGER
@@ -44,12 +45,6 @@ class InstaBot:
         #  self.service = self.start_appium(port=4724) if start_appium else None
         self.adb = AdbClient() if start_adb else None
         self.device = None
-        self.phone = (
-            
-            self.user_avd.twitter_account.phone
-            if self.user_avd.twitter_account
-            else None
-        )
         self.get_device_retires = 0
         self.start_driver_retires = 0
         log_activity(
@@ -191,6 +186,9 @@ class InstaBot:
 
         
         LOGGER.debug('Check if instagram is installed')
+        
+        if self.driver().is_app_installed("com.instagram.android"):
+            self.driver().remove_app('')
         if not self.driver().is_app_installed("com.instagram.android"):
             LOGGER.debug('instagram is not installed, now install it')
             self.install_apk(self.adb_console_port, "instagram")
@@ -1021,7 +1019,6 @@ class InstaBot:
         birth_next = 'com.instagram.android:id/button_text'
         username_suggested_next = 'com.instagram.android:id/button_text'
         self.driver().hide_keyboard()
-        breakpoint()
         self.driver().find_element(By.ID,'com.instagram.android:id/full_name').send_keys(name)
         time.sleep(2)
         self.driver().find_element(By.ID,'com.instagram.android:id/password').send_keys(password)
@@ -1126,37 +1123,71 @@ class InstaBot:
             
     def start_app(self,activity = ''):
         time.sleep(3)
-        try:
-            self.driver().activate_app('com.instagram.android')
+        for  _ in range(3):
+            breakpoint()
+            for _ in range(10):self.driver().back()
             try:
-                self.driver().start_activity('com.instagram.android',"com.instagram.mainactivity.MainActivity")
-            except Exception as e:None
-            time.sleep(3)
+                
+                self.driver().activate_app('com.instagram.android')
+                # try : self.driver().start_activity('com.instagram.android',"com.instagram.mainactivity")
+                # except Exception as e : None
+                time.sleep(3)
+                # breakpoint()
+                if activity.lower() == 'login':
+                    LoginBtn = self.find_element('login btn','//android.view.View[@content-desc="Log in"]',timeout=15)
+                    if LoginBtn: 
+                        if LoginBtn.text == 'Log in':
+                            return True
+                elif activity.lower() == 'sign up':
+                    self.click_element('Sign up btn','com.instagram.android:id/sign_up_with_email_or_phone',By.ID,timeout=3)
+                    allow_contacts_id = 'com.instagram.android:id/primary_button_row'
+                    self.click_element('Allow contact',allow_contacts_id,By.ID, timeout=3)
 
-            if activity.lower() == 'login':
-                self.click_element('login btn','com.instagram.android:id/log_in_button',By.ID,timeout=3)
-            elif activity.lower() == 'sign up':
-                self.click_element('Sign up btn','com.instagram.android:id/sign_up_with_email_or_phone',By.ID,timeout=3)
-                allow_contacts_id = 'com.instagram.android:id/primary_button_row'
-                self.click_element('Allow contact',allow_contacts_id,By.ID, timeout=3)
+                time.sleep(0.5)
+                try:self.driver().hide_keyboard()
+                except Exception as e: ...
+                    
+            
 
-            time.sleep(0.5)
-            self.driver().hide_keyboard()
-
-            return True
-        except Exception as e:
-            self.logger.info(f'Got an error in opening the instagram {e}')
+                return True
+            except Exception as e:
+                self.logger.info(f'Got an error in opening the instagram {e}')
 
     def login(self,username,password):
-        breakpoint()
+        self.user = User_details.objects.filter(username=username).first()
+        if not self.start_app('login') : return False
         
-        self.start_app('login')
+        
         print("inside login methods")
         HomeBtn = self.find_element('Home page','com.instagram.android:id/feed_tab',By.ID)
         if HomeBtn : return True
         self.input_text(username,'Username','/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout[1]/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup[1]/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup/android.widget.EditText')
         self.input_text(password,'Password','/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout[1]/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup/android.view.ViewGroup[2]/android.view.ViewGroup/android.view.ViewGroup/android.widget.EditText')
         self.click_element('Login btn','//android.widget.Button[@content-desc="Log in"]')
+        
+        # check need otp or not?
+        # self.driver().find_elements(By.TAG_NAME,'android.widget.EditText')
+        check_number_h1 = self.find_element('Confirm its you H1','/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.FrameLayout[1]/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/android.view.ViewGroup/android.view.View[1]',timeout=12)
+        if check_number_h1:
+            if check_number_h1.text == "Confirm it's you":
+                self.user.status = 'LOGIN_ISSUE'
+                self.user.save()
+                return False
+            
+        check_number_h1 = self.find_element('Confirm its you H1','/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.FrameLayout[1]/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/android.view.ViewGroup/android.view.View[1]',timeout=2)
+        if check_number_h1:
+            if check_number_h1.text == "Confirm it's you":
+                self.user.status = 'LOGIN_ISSUE'
+                self.user.save()
+                return False
+            
+        check_number_h2 = self.find_element('Confirm its you H2','/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.FrameLayout[1]/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/android.view.ViewGroup/android.view.View[2]',timeout=2)
+        if check_number_h2:
+            if check_number_h2.text == "To secure your account, we'll send you a security code to this phone number":
+                self.user.status = 'LOGIN_ISSUE'
+                self.user.save()
+                return False
+        # To secure your account, we'll send you a security code to this phone number
         
         # save login info
         SaveInfo = self.find_element('save info','//android.view.View[@content-desc="Save your login info?"]',timeout=20)
@@ -1166,10 +1197,11 @@ class InstaBot:
         # check profile
         self.click_element('Profile btn','com.instagram.android:id/tab_avatar',By.ID)
         ProfileName = self.find_element('Profile name','com.instagram.android:id/action_bar_large_title_auto_size',By.ID)
-        if ProfileName.text == username: 
-            return True
-        else : return False
-                    
+        if ProfileName:
+            if ProfileName.text == username: 
+                return True
+            else : return False
+        else: return False
         
     def search_user(self,Username):
         self.click_element('Search btn','com.instagram.android:id/search_tab',By.ID)
@@ -1195,7 +1227,6 @@ class InstaBot:
         else: return False        
         
     def Follow(self):
-        breakpoint()
         FollowBtn = self.find_element('Follow btn','com.instagram.android:id/profile_header_follow_button',By.ID)
         if FollowBtn.text != 'Following': FollowBtn.click()
         
@@ -1238,7 +1269,6 @@ class InstaBot:
             if not PostDetails : self.logger.info('Posts details didnt found')
             if CommentBtn and PostDetails:
                 random_sleep(3)
-                breakpoint()
                 
                 self.input_text(GetInstaComments(PostDetailsText),'Comment input','com.instagram.android:id/layout_comment_thread_edittext',By.ID)
                 self.click_element('Post comment btn','//android.widget.Button[@content-desc="Post"]/android.widget.LinearLayout/android.widget.TextView')
@@ -1257,12 +1287,12 @@ class InstaBot:
             random_sleep(10,15,reason='Wait untill story opens')
             
             # permissions
-            PermissionCamera = self.click_element('Allow btn for camera permission','/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.Button[2]',timeout=2)
-            if PermissionCamera :
-                self.click_element('Allow btn for audio','com.android.packageinstaller:id/permission_allow_button',By.ID,timeout=2)
-                self.click_element('Allow btn for storage','com.android.packageinstaller:id/permission_allow_button',By.ID,timeout=2)
-                self.click_element('Ok btn','com.instagram.android:id/primary_button',By.ID,timeout=2)
-            
+            self.click_element('Allow btn for camera permission','/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.Button[2]',timeout=2)
+            self.click_element('Allow btn for audio','com.android.packageinstaller:id/permission_allow_button',By.ID,timeout=2)
+            self.click_element('Allow btn for storage','com.android.packageinstaller:id/permission_allow_button',By.ID,timeout=2)
+            self.click_element('Ok btn','com.instagram.android:id/primary_button',By.ID,timeout=2)
+            self.click_element('Ok btn2','//android.widget.Button[@content-desc="Continue watching stories"]',By.XPATH,timeout=2)
+        
             self.click_element('Share to','//android.widget.FrameLayout[@content-desc="Share to"]')
             self.click_element('Share to your story','com.instagram.android:id/row_add_to_story_container',By.ID)
             self.click_element('Share btn','com.instagram.android:id/share_story_button',By.ID)
@@ -1284,26 +1314,27 @@ class InstaBot:
             
             
     def EngagementOnUser(self):
-        breakpoint()
         self.click_element('Grid View','//android.widget.ImageView[@content-desc="Grid view"]')
         
         PostCount = 1
         for column in range(1,4):
             for indexx in range(1,4):
-                post_fount = False
-                for _ in range(3):
-                    self.click_element(f'post : {PostCount}', f'//android.widget.Button[@content-desc="Reel by XANA | Metaverse at row {column}, column {indexx}"]')
-                    self.ActionOnPost()
-                    PostCount+=1
-            self.swip_display(3)
+                
+                for _ in range(5):
+                    post_ele = self.click_element(f'post : {PostCount}', f'//android.widget.Button[@content-desc="Reel by XANA | Metaverse at row {column}, column {indexx}"]')
+                    if post_ele:
+                        self.ActionOnPost()
+                        PostCount+=1
+                        break
+                    else : self.swip_display(4)
+            self.swip_display(4)
             
     def send_views(self,Username='xanametaverse'):
-        breakpoint()
+        
         self.search_user(Username)
         self.Follow()
         self.EngagementOnUser()
         self.ReelsView()
-        breakpoint()
         
         
         

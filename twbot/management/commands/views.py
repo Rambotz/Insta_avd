@@ -7,7 +7,7 @@ import numpy as np
 from django.core.management.base import BaseCommand
 
 from conf import US_TIMEZONE, PARALLEL_NUMER
-from core.models import User
+from core.models import User, user_detail
 from exceptions import PhoneRegisteredException, CannotRegisterThisPhoneNumberException, GetSmsCodeNotEnoughBalance
 from twbot.actions.follow import *
 from twbot.bot import *
@@ -39,13 +39,13 @@ class Command(BaseCommand):
         )
 
     def create_avd(self,avdname):
-        
+        # breakpoint()
         LOGGER.debug('Start to creating AVD user')
         twbot = InstaBot(avdname, start_appium=False, start_adb=False)
         device = random.choice(AVD_DEVICES)  # get a random device
         # package = random.choice(AVD_PACKAGES)  # get a random package
         twbot.create_avd(avd_name=avdname,device=device)
-        LOGGER.info(f"**** AVD created with name: {avdname} ****")
+        LOGGER.info(f"**** AVD created with name1111: {avdname} ****")
         return avdname
     
     def create_avd_object(self,avdname):
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 filter(
                     lambda y: not UserAvd.objects.filter(port=y).exists(),
                     map(
-                        lambda x: 5550 + x, range(1, 4000)
+                        lambda x: 5550 + x, range(1, 500)
                     )
                 )
             )
@@ -85,32 +85,35 @@ class Command(BaseCommand):
         LOGGER.debug(f'AVD USER: {user_avd}')
         
         
-        LOGGER.info(f"**** AVD created with name: {avdname} ****")
+        LOGGER.info(f"**** AVD created with name2222: {avdname} ****")
         return user_avd
 
     def run_tasks(self):
         country = 'Hong Kong'
         
-        avd_list = subprocess.check_output(['emulator', '-list-avds'])
-        avd_list = [avd for avd in avd_list.decode().split("\n") if avd]
-        print(avd_list)
         
         while True:
-            all_users = list(User_details.objects.filter(status='ACTIVE').order_by('-created_at'))
+            
+            # all_users = list(user_detail.objects.using('monitor').filter(status='ACTIVE').order_by('-created_at'))
+            all_users = list(user_detail.objects.using('monitor').filter(status='ACTIVE').order_by('?'))
             print(len(all_users),'-----')
             for userr in all_users:
-                
-                
+                LOGGER.info(f'{userr} -------11111')
+                # breakpoint()
                 if not UserAvd.objects.filter(name = userr.avdsname).exists():
                     user_avd = self.create_avd_object(userr.avdsname)
-                    avd_list.append(user_avd.name)
                 else : 
                     user_avd = UserAvd.objects.filter(name=userr.avdsname).first()
+                    avd_list = subprocess.check_output(['emulator', '-list-avds'])
+                    avd_list = [avd for avd in avd_list.decode().split("\n") if avd]
+                    print(avd_list)
+                    if not user_avd.name in avd_list:
+                        UserAvd.objects.filter(name=userr.avdsname).first().delete()
+                        user_avd = self.create_avd_object(userr.avdsname)
                 
-                if not user_avd.name in avd_list:
-                   avd_list.append(self.create_avd(user_avd.name))
+                        print(user_avd.name,'======================================')
+                        print(avd_list)
                 
-                print(user_avd.name)
             
                 try:
                     
@@ -124,8 +127,8 @@ class Command(BaseCommand):
                     else:
                         tb.check_apk_installation()
                     
-                    tb.login(userr.username,userr.password)
-                    tb.send_views(AGENT)
+                    if tb.login(userr.username,userr.password) :
+                        tb.send_views(AGENT)
                     
                     # accounts_created_bool = tb.create_account()
                     # time.sleep(300)
@@ -156,7 +159,6 @@ class Command(BaseCommand):
                         name = user_avd.name
                         port = ''
                         parallel.stop_avd(name=name, port=port)
-            break
     def handle(self, *args, **options):
         self.total_accounts_created = 0
         self.avd_pack = []

@@ -69,11 +69,6 @@ class UserAvd(TimeStampModel):
 
     COUNTRIES = tuple((i,) * 2 for i in CyberGhostVpn.get_server_list())
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="avd_user")
-    twitter_account = models.ForeignKey(TwitterAccount,
-                                        null=True,
-                                        blank=True,
-                                        on_delete=models.CASCADE,
-                                        related_name="avd_twitter_account")
     name = models.CharField(max_length=100, unique=True)
     port = models.IntegerField(unique=True)
     proxy_type = models.CharField(max_length=50, choices=prox_type, blank=True, null=True)
@@ -188,44 +183,3 @@ def delete_avd(sender, instance, **kwargs):
 post_save.connect(create_better_avd, sender=UserAvd)
 pre_delete.connect(delete_avd, sender=UserAvd)
 
-
-class TwitterActionLog(TimeStampModel):
-    ACTION_TYPE = (
-        ("LIKE", "LIKE"),
-        ("TWEET", "TWEET"),
-        ('LOGOUT', 'LOGOUT'),
-        ("LIKE_ACTION", "LIKE_ACTION"),
-        ("RETWEET_ACTION", "RETWEET_ACTION"),
-        ("FOLLOW_ACTION", "FOLLOW_ACTION"),
-        ('STARTING_DEVICE', 'STARTING_DEVICE'),
-        ('CHECK_INSTALLATIONS', 'CHECK_INSTALLATIONS'),
-        ('SHADOWSOCKS_CONNECTION', 'SHADOWSOCKS_CONNECTION'),
-        ("LOGIN", "LOGIN"),
-        ("FOLLOW", "FOLLOW"),
-        ("UNFOLLOW", "UNFOLLOW"),
-        ("TWEET_TEXT", "TWEET_TEXT"),
-        ("TWEET_IMAGE", "TWEET_IMAGE"),
-        ("RETWEET", "RETWEET"),
-        ("RANDOM_ACTION", "RANDOM_ACTION"),
-        ("ENGAGEMENT", "ENGAGEMENT")
-    )
-    STATUS = (
-        ("SUCCESS", "SUCCESS"),
-        ("FAIL", "FAIL")
-    )
-
-    avd = models.ForeignKey(
-        UserAvd, blank=True, null=True, on_delete=models.CASCADE
-    )
-    action_type = models.CharField(
-        max_length=32, choices=ACTION_TYPE, blank=True, null=True
-    )
-    status = models.CharField(
-        max_length=32, choices=STATUS, blank=True, null=True
-    )
-    msg = JSONFieldPostgres(default=dict, blank=True, null=True)
-    action = models.CharField(max_length=250, null=True, blank=True)
-    error = JSONFieldPostgres(default=dict, blank=True, null=True)
-    
-
-    
